@@ -116,7 +116,8 @@ html {
     cursor: pointer;
 }
 
-.keypad-row__item:active  {
+.item-active,
+.item-active:hover  {
     font-size: 1.5vh;
     font-weight: 700;   
     color: #272822;
@@ -131,4 +132,9 @@ html {
 
 .view-selection {
     color: #a6e22c;
+}
+.keypad-row__item-change {
+    color: #e6db74;
+    border: 1px solid #e6db74;
+    transition: 0.25s ease 0.1s;
 }
