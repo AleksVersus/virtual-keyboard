@@ -51,6 +51,7 @@ html {
 .default-textarea {
     width: 75vw;
     min-height: 10vh;
+    resize: none;
     font-size: 2em;
     color: #f8f8f2;
     background: #272822;
