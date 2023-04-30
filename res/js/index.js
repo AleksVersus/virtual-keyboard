@@ -554,7 +554,7 @@ function fillKeypadRows(row, buttons) {
     }
 }
 
-function getButtonText(key, shift=false) {
+function getButtonText(key) {
     if (keyboardModes.lang==='eng' || keyBase[key].rusLow===undefined) {
         // eng on if rus symbols is out, or eng lang switch on
         if (((keyboardModes.isCapsLock && keyBase[key].engCaps) || (keyboardModes.isShift)) && keyBase[key].engUpp!==undefined) {
@@ -588,23 +588,35 @@ function addReferences(wrapper) {
 createKeyboard();
 
 let keypad = document.querySelector('#keypad');
-keypad.addEventListener('mousedown', pressIntercept);
-keypad.addEventListener('mouseup', releaseIntercept);
+keypad.addEventListener('mousedown', pressBtnIntercept);
+keypad.addEventListener('mouseup', releaseBtnIntercept);
 keypad.addEventListener('selectstart', (e)=>{e.preventDefault()});
+document.addEventListener('keydown', pressKeyIntercept);
+document.addEventListener('keyup', releaseKeyIntercept);
+// window.addEventListener('key')
 
-function pressIntercept(event) {
+function pressBtnIntercept(event) {
     // keypad intercept event from buttons and run behaviour
+    event.preventDefault();
     let clicked = event.target;
     if (clicked.classList.contains('keypad-row__item')) {
         pressButton(clicked.id);
     }
 }
-function releaseIntercept(event) {
+function pressKeyIntercept(event) {
+    event.preventDefault();
+    pressButton(event.code);
+}
+function releaseBtnIntercept(event) {
     // keypad intercept event from buttons and run behaviour
     let clicked = event.target;
     if (clicked.classList.contains('keypad-row__item')) {
         releaseButton(clicked.id);
     }
+}
+function releaseKeyIntercept(event) {
+    // keypad intercept event from buttons and run behaviour
+    releaseButton(event.code);
 }
 function pressButton(key) {
     let btn = document.querySelector(`#${key}`);
@@ -626,6 +638,7 @@ function pressButton(key) {
     // pressed buttons
     refreshPressedButton(pressedKeys);
     retapeButtonsNames();
+    printLetter(key);
 }
 function releaseButton(key) {
     let btn = document.querySelector(`#${key}`);
@@ -656,9 +669,37 @@ function retapeButtonsNames() {
         let last = String(el.innerHTML);
         el.innerHTML = getButtonText(key);
         if (last!=String(el.innerHTML)) {
-            console.log('eeee');
             el.classList.add('keypad-row__item-change');
             setTimeout((el)=>{el.classList.remove('keypad-row__item-change')}, 300, el);
         }
+    }
+}
+function getRange() {
+    let ta = document.querySelector('#kb-textarea');
+    // let range = [ta.selectionStart, ta.selectionEnd];
+}
+function printLetter(key) {
+    let ta = document.querySelector('#kb-textarea');
+    if (isLetter(key)) {
+        ta.value += getButtonText(key);
+        let range = ta.getSelectionRange();
+        console.log(range);
+    } else {
+        switch(key) {
+            case 'Space':
+                ta.value += ' ';
+                break;
+            case 'ControlRight':
+                break;
+            default:
+                break;
+        }
+    }
+}
+function isLetter(key) {
+    if (keyBase[key].engUpp!==undefined) {
+        return true;
+    } else {
+        return false;
     }
 }
