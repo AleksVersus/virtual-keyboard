@@ -46,8 +46,8 @@ const keyBase = {
   Digit6: {
     engLow: '6',
     engUpp: '^',
-    rusLow: '',
-    rusUpp: '',
+    rusLow: '6',
+    rusUpp: ':',
     engCaps: false,
     rusCaps: false,
   },
@@ -447,11 +447,17 @@ const keyBase = {
     rusCaps: false,
   },
 }
-let keyboardModes = {
-  isCapsLock: false,
-  lang: 'eng',
-  isShift: false,
+class kbModes {
+  constructor() {
+    this.isCapsLock = false;
+    this.lang = 'eng';
+    this.isShift = false;
+  }
+  changeLang() {
+    this.lang = (this.lang === 'eng' ? 'rus' : 'eng');
+  }
 }
+let keyboardModes = new kbModes();
 let pressedKeys = new Set(); // keys id (code)-s
 // let taRange = new Range();
 
@@ -574,7 +580,7 @@ function addReferences(wrapper) {
   let ref = [
     'Клавиатура создана в системе <span class="view-selection">Windows</span>',
     '<p class="references">Переключение раскладки производится комбинацией клавиш <span class="view-selection">Alt + Shift</span>',
-    '<p class="references">Нажаты клавиши: <span class="view-selection" id="pressed-keys">KeyZ</span></p>',
+    '<p class="references">Нажаты клавиши: <span class="view-selection" id="pressed-keys">&nbsp;</span></p>',
   ];
   for (const i of ref) {
     let p = document.createElement('p');
@@ -604,7 +610,12 @@ function pressBtnIntercept(event) {
 }
 function pressKeyIntercept(event) {
   event.preventDefault();
-  pressButton(event.code);
+  if (keyBase[event.code] !== undefined) {
+    pressButton(event.code);
+  } else {
+    pressedKeys.add(event.code);
+    refreshPressedButton(pressedKeys);
+  }
 }
 function releaseBtnIntercept(event) {
   // keypad intercept event from buttons and run behaviour
@@ -615,7 +626,12 @@ function releaseBtnIntercept(event) {
 }
 function releaseKeyIntercept(event) {
   // keypad intercept event from buttons and run behaviour
-  releaseButton(event.code);
+  if (keyBase[event.code] !== undefined) {
+    releaseButton(event.code);
+  } else {
+    pressedKeys.delete(event.code);
+    refreshPressedButton(pressedKeys);
+  }
 }
 function pressButton(key) {
   let btn = document.querySelector(`#${key}`);
@@ -637,7 +653,7 @@ function pressButton(key) {
   // pressed buttons
   refreshPressedButton(pressedKeys);
   retapeButtonsNames();
-  printLetter(key);
+  runBtnBehaviour(key);
 }
 function releaseButton(key) {
   let btn = document.querySelector(`#${key}`);
@@ -675,28 +691,109 @@ function retapeButtonsNames() {
 }
 function getRange() {
   let ta = document.querySelector('#kb-textarea');
-  let range = [ta.selectionStart, ta.selectionEnd];
-}
-function printLetter(key) {
-  let ta = document.querySelector('#kb-textarea');
-  if (isLetter(key)) {
-    
+  if (document.activeElement === ta) {
+    return [ta.selectionStart, ta.selectionEnd];
   } else {
-    switch(key) {
+    return null;
+  }
+}
+function runBtnBehaviour(key) {
+  let ta = document.querySelector('#kb-textarea');
+  if (isSign(key)) {
+    insertSign(key, ta);
+  } else {
+    switch(key){
       case 'Space':
-        ta.value += ' ';
+        insertSign(' ', ta);
         break;
-      case 'ControlRight':
+      case 'Tab':
+        insertSign('\t', ta);
+        break;
+      case 'Enter':
+        insertSign('\n', ta);
+        break;
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        insertSign(key, ta);
+        break;
+      case 'Backspace':
+        deleteSign(key, ta);
+        break;
+      case 'Delete':
+          deleteSign(key, ta);
+          break;
+      case 'ShiftLeft':
+      case 'ShiftRight':
+        if (pressedKeys.has('AltLeft') || pressedKeys.has('AltRight')) {
+          keyboardModes.changeLang();
+          retapeButtonsNames();
+        }
+        break;
+      case 'AltLeft':
+      case 'AltRight':
+        if (pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight')) {
+          keyboardModes.changeLang();
+          retapeButtonsNames();
+        }
         break;
       default:
         break;
     }
   }
 }
-function isLetter(key) {
+
+function isSign(key) {
   if (keyBase[key].engUpp !== undefined) {
     return true;
   } else {
     return false;
+  }
+}
+
+function insertSign(key, ta) {
+  let range = getRange();
+  let btnText = ((keyBase[key] !== undefined) ? getButtonText(key): key);
+  if (range === null) {
+    ta.value += btnText;
+  } else {
+    ta.value = ta.value.slice(0, range[0]) + btnText + ta.value.slice(range[1]);
+    ta.selectionStart = range[0]+1;
+    ta.selectionEnd = range[0]+1;
+  }
+}
+
+function deleteSign(key, ta) {
+  let range = getRange();
+  if (range === null) {
+    if (key === 'Backspace') {
+      ta.value = ta.value.slice(0, ta.value.length-1);
+    } else if (key === 'Delete') {
+      // pass
+    }
+  } else {
+    if (key === 'Backspace') {
+      if (range[0] === range[1] && !(range[0] === 0 && range[1] === 0)) {
+        ta.value = ta.value.slice(0, range[0]-1) + ta.value.slice(range[1]);
+        ta.selectionStart = range[0]-1;
+        ta.selectionEnd = range[0]-1;
+      } else if (range[0] !== range[1]) {
+        ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]);
+        ta.selectionStart = range[0];
+        ta.selectionEnd = range[0];
+      }
+    } else if (key === 'Delete') {
+      if (range[0] === range[1] && !(range[0] === ta.value.length || range[1] === ta.value.length)) {
+        ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]+1);
+        ta.selectionStart = range[1];
+        ta.selectionEnd = range[1];
+      } else if (range[0] !== range[1]) {
+        ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]);
+        ta.selectionStart = range[0];
+        ta.selectionEnd = range[0];
+      }
+    }
+    
   }
 }
