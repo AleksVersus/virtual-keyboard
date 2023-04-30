@@ -446,13 +446,14 @@ const keyBase = {
     engCaps: false,
     rusCaps: false,
   },
-}
-class kbModes {
-  constructor(lang='eng') {
+};
+class KbModes {
+  constructor(lang = 'eng') {
     this.isCapsLock = false;
     this.lang = lang;
     this.isShift = false;
   }
+
   changeLang() {
     this.lang = (this.lang === 'eng' ? 'rus' : 'eng');
   }
@@ -460,52 +461,27 @@ class kbModes {
 const saveDot = localStorage;
 let keyboardModes;
 if (saveDot.getItem('lang')) {
-  let lang = saveDot.getItem('lang');
-  keyboardModes = new kbModes(lang);
+  const lang = saveDot.getItem('lang');
+  keyboardModes = new KbModes(lang);
 } else {
-  keyboardModes = new kbModes();
+  keyboardModes = new KbModes();
   saveDot.setItem('lang', keyboardModes.lang);
 }
-
-let pressedKeys = new Set(); // keys id (code)-s
-// let taRange = new Range();
-
-function createKeyboard() {
-  let body = document.body;
-  let wrapper = document.createElement('div');
-  wrapper.classList.add('keyboard-wrapper');
-  body.append(wrapper);
-  let textarea = document.createElement('textarea');
-  textarea.classList.add('default-textarea');
-  setAttributes(textarea, {
-    name:"kb-textarea",
-    id:"kb-textarea",
-    cols:"30",
-    rows:"10"}
-  );
-  wrapper.append(textarea);
-  let keypad = document.createElement('div');
-  keypad.classList.add('keypad');
-  keypad.id = 'keypad';
-  wrapper.append(keypad);
-  let keypadRows = addKeypadRows(keypad);
-  addKeypadItems(keypadRows);
-  addReferences(wrapper);
-}
+const pressedKeys = new Set(); // keys id (code)-s
 
 function setAttributes(element, attributes) {
-  for (let a in attributes) {
+  Object.keys(attributes).forEach((a) => {
     element.setAttribute(a, attributes[a]);
-  }
+  });
 }
 
 function addKeypadRows(keypad) {
-  let levels = ['a','b','c','d','e'];
-  let result = [];
-  while (levels.length>0) {
-    let l = levels.pop();
-    let el = document.createElement('div');
-    el.classList.add(`keypad-row`);
+  const levels = ['a', 'b', 'c', 'd', 'e'];
+  const result = [];
+  while (levels.length > 0) {
+    const l = levels.pop();
+    const el = document.createElement('div');
+    el.classList.add('keypad-row');
     el.classList.add(`keypad-row-${l}`);
     keypad.append(el);
     result.push(el);
@@ -513,36 +489,70 @@ function addKeypadRows(keypad) {
   return result;
 }
 
+function getButtonText(key) {
+  if (keyboardModes.lang === 'eng' || keyBase[key].rusLow === undefined) {
+    // eng on if rus symbols is out, or eng lang switch on
+    if (((keyboardModes.isCapsLock && keyBase[key].engCaps) || (keyboardModes.isShift))
+      && keyBase[key].engUpp !== undefined) {
+      return keyBase[key].engUpp;
+    }
+    return keyBase[key].engLow;
+  }
+  if (((keyboardModes.isCapsLock && keyBase[key].rusCaps) || (keyboardModes.isShift))
+    && keyBase[key].rusUpp !== undefined) {
+    return keyBase[key].rusUpp;
+  }
+  return keyBase[key].rusLow;
+}
+
+function retapeButtonsNames() {
+  Object.keys(keyBase).forEach((key) => {
+    const el = document.querySelector(`#${key}`);
+    const last = String(el.innerHTML);
+    el.innerHTML = getButtonText(key);
+    if (last !== String(el.innerHTML)) {
+      el.classList.add('keypad-row__item-change');
+      setTimeout((e) => { e.classList.remove('keypad-row__item-change'); }, 300, el);
+    }
+  });
+}
+
+function fillKeypadRows(row, buttons) {
+  buttons.forEach((button) => {
+    const el = document.createElement('div');
+    el.classList.add('keypad-row__item');
+    el.id = button;
+    el.innerHTML = getButtonText(button);
+    row.append(el);
+  });
+}
+
 function addKeypadItems(keypadRows) {
-  let keysRows = {
-    e: [ 'Backquote', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal', 'Backspace' ],
-    d: [ 'Tab', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight', 'Backslash', 'Delete' ],
-    c: [ 'CapsLock', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Enter' ],
-    b: [ 'ShiftLeft', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'ShiftRight' ],
-    a: [ 'ControlLeft', 'MetaLeft', 'AltLeft', 'Space', 'AltRight', 'ControlRight' ],
-    arrows: [ 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight']
+  const keysRows = {
+    e: ['Backquote', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal', 'Backspace'],
+    d: ['Tab', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight', 'Backslash', 'Delete'],
+    c: ['CapsLock', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Enter'],
+    b: ['ShiftLeft', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'ShiftRight'],
+    a: ['ControlLeft', 'MetaLeft', 'AltLeft', 'Space', 'AltRight', 'ControlRight'],
+    arrows: ['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'],
   };
-  for (let row of keypadRows) {
+  keypadRows.forEach((row) => {
     if (row.classList.contains('keypad-row-e')) {
       fillKeypadRows(row, keysRows.e);
-    }
-    else if (row.classList.contains('keypad-row-d')) {
+    } else if (row.classList.contains('keypad-row-d')) {
       fillKeypadRows(row, keysRows.d);
-    }
-    else if (row.classList.contains('keypad-row-c')) {
+    } else if (row.classList.contains('keypad-row-c')) {
       fillKeypadRows(row, keysRows.c);
-    }
-    else if (row.classList.contains('keypad-row-b')) {
+    } else if (row.classList.contains('keypad-row-b')) {
       fillKeypadRows(row, keysRows.b);
-    }
-    else if (row.classList.contains('keypad-row-a')) {
+    } else if (row.classList.contains('keypad-row-a')) {
       fillKeypadRows(row, keysRows.a);
-      let arrowsBlock = document.createElement('div');
+      const arrowsBlock = document.createElement('div');
       arrowsBlock.classList.add('keypad-row__arrows');
       row.append(arrowsBlock);
-      for (let i=0, b=0; i<6; i++) {
-        let el = document.createElement('div');
-        if (i==0 || i==2) {
+      for (let i = 0, b = 0; i < 6; i += 1) {
+        const el = document.createElement('div');
+        if (i === 0 || i === 2) {
           el.classList.add('keypad-row__spaced');
           el.innerHTML = '&nbsp;';
         } else {
@@ -550,168 +560,82 @@ function addKeypadItems(keypadRows) {
           el.classList.add('keypad-row__arrow-item');
           el.id = keysRows.arrows[b];
           el.innerHTML = getButtonText(keysRows.arrows[b]);
-          b++;
+          b += 1;
         }
         arrowsBlock.append(el);
       }
-    };
-  }
-}
-
-function fillKeypadRows(row, buttons) {
-  for (let button of buttons) {
-    let el = document.createElement('div');
-    el.classList.add('keypad-row__item');
-    el.id = button;
-    el.innerHTML = getButtonText(button);
-    row.append(el);
-  }
-}
-
-function getButtonText(key) {
-  if (keyboardModes.lang==='eng' || keyBase[key].rusLow===undefined) {
-    // eng on if rus symbols is out, or eng lang switch on
-    if (((keyboardModes.isCapsLock && keyBase[key].engCaps) || (keyboardModes.isShift)) && keyBase[key].engUpp!==undefined) {
-      return keyBase[key].engUpp;
-    } else {
-      return keyBase[key].engLow;
     }
-  } else {
-    if (((keyboardModes.isCapsLock && keyBase[key].rusCaps) || (keyboardModes.isShift)) && keyBase[key].rusUpp!==undefined) {
-      return keyBase[key].rusUpp;
-    } else {
-      return keyBase[key].rusLow;
-    }
-  }
+  });
 }
 
-function addReferences(wrapper) {
-  let ref = [
-    'Клавиатура создана в системе <span class="view-selection">Windows</span>',
-    '<p class="references">Переключение раскладки производится комбинацией клавиш <span class="view-selection">Alt + Shift</span>',
-    '<p class="references">Нажаты клавиши: <span class="view-selection" id="pressed-keys">&nbsp;</span></p>',
-  ];
-  for (const i of ref) {
-    let p = document.createElement('p');
-    p.classList.add('references');
-    p.innerHTML = i;
-    wrapper.append(p);
-  }
-}
-
-createKeyboard();
-
-let keypad = document.querySelector('#keypad');
-keypad.addEventListener('mousedown', pressBtnIntercept);
-keypad.addEventListener('mouseup', releaseBtnIntercept);
-keypad.addEventListener('selectstart', (e)=>{e.preventDefault()});
-document.addEventListener('keydown', pressKeyIntercept);
-document.addEventListener('keyup', releaseKeyIntercept);
-document.querySelector('#kb-textarea').addEventListener('focus', getRange);
-
-function pressBtnIntercept(event) {
-  // keypad intercept event from buttons and run behaviour
-  event.preventDefault();
-  let clicked = event.target;
-  if (clicked.classList.contains('keypad-row__item')) {
-    pressButton(clicked.id);
-  }
-}
-function pressKeyIntercept(event) {
-  event.preventDefault();
-  if (keyBase[event.code] !== undefined) {
-    pressButton(event.code);
-  } else {
-    pressedKeys.add(event.code);
-    refreshPressedButton(pressedKeys);
-  }
-}
-function releaseBtnIntercept(event) {
-  // keypad intercept event from buttons and run behaviour
-  let clicked = event.target;
-  if (clicked.classList.contains('keypad-row__item')) {
-    releaseButton(clicked.id);
-  }
-}
-function releaseKeyIntercept(event) {
-  // keypad intercept event from buttons and run behaviour
-  if (keyBase[event.code] !== undefined) {
-    releaseButton(event.code);
-  } else {
-    pressedKeys.delete(event.code);
-    refreshPressedButton(pressedKeys);
-  }
-}
-function pressButton(key) {
-  let btn = document.querySelector(`#${key}`);
-  if (key!=='CapsLock') {
-    pressedKeys.add(key);
-    btn.classList.add('item-active');
-  } else {
-    if (keyboardModes.isCapsLock) {
-      pressedKeys.delete(key);
-    } else {
-      pressedKeys.add(key);
-    }
-    keyboardModes.isCapsLock = !keyboardModes.isCapsLock;
-    btn.classList.toggle('item-active');
-  }
-  if (key==='ShiftRight' || key==='ShiftLeft') {
-    keyboardModes.isShift = true;
-  }
-  // pressed buttons
-  refreshPressedButton(pressedKeys);
-  retapeButtonsNames();
-  runBtnBehaviour(key);
-}
-function releaseButton(key) {
-  let btn = document.querySelector(`#${key}`);
-  if (key!=='CapsLock') {
-    pressedKeys.delete(key);
-    btn.classList.remove('item-active');
-  }
-  if (key==='ShiftRight' || key==='ShiftLeft') {
-    keyboardModes.isShift = false;
-  }
-  // pressed buttons
-  refreshPressedButton(pressedKeys);
-  retapeButtonsNames();
-}
-
-function refreshPressedButton(pressedKeys) {
-  let r =[];
-  for (let el of pressedKeys) {
-    r.push(el);
-  }
-  let pressed = document.querySelector('#pressed-keys');
-  pressed.innerHTML = r.join(' + ');
-}
-
-function retapeButtonsNames() {
-  for (let key in keyBase) {
-    let el = document.querySelector(`#${key}`);
-    let last = String(el.innerHTML);
-    el.innerHTML = getButtonText(key);
-    if (last !== String(el.innerHTML)) {
-      el.classList.add('keypad-row__item-change');
-      setTimeout((el)=>{el.classList.remove('keypad-row__item-change')}, 300, el);
-    }
-  }
-}
 function getRange() {
-  let ta = document.querySelector('#kb-textarea');
+  const ta = document.querySelector('#kb-textarea');
   if (document.activeElement === ta) {
     return [ta.selectionStart, ta.selectionEnd];
+  }
+  return null;
+}
+
+function isSign(key) {
+  if (keyBase[key].engUpp !== undefined) {
+    return true;
+  }
+  return false;
+}
+
+function insertSign(key) {
+  const ta = document.querySelector('#kb-textarea');
+  const range = getRange();
+  const btnText = ((keyBase[key] !== undefined) ? getButtonText(key) : key);
+  if (range === null) {
+    ta.value += btnText;
   } else {
-    return null;
+    ta.value = ta.value.slice(0, range[0]) + btnText + ta.value.slice(range[1]);
+    ta.selectionStart = range[0] + 1;
+    ta.selectionEnd = range[0] + 1;
   }
 }
+
+function deleteSign(key) {
+  const ta = document.querySelector('#kb-textarea');
+  const range = getRange();
+  if (range === null) {
+    if (key === 'Backspace') {
+      ta.value = ta.value.slice(0, ta.value.length - 1);
+    } else if (key === 'Delete') {
+      // pass
+    }
+  } else if (key === 'Backspace') {
+    if (range[0] === range[1] && !(range[0] === 0 && range[1] === 0)) {
+      ta.value = ta.value.slice(0, range[0] - 1) + ta.value.slice(range[1]);
+      ta.selectionStart = range[0] - 1;
+      ta.selectionEnd = range[0] - 1;
+    } else if (range[0] !== range[1]) {
+      ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]);
+      // eslint is dummy
+      ta.selectionStart = range[0] + 0;
+      ta.selectionEnd = range[0] + 0;
+    }
+  } else if (range[0] === range[1]
+    && !(range[0] === ta.value.length || range[1] === ta.value.length)) {
+    ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1] + 1);
+    // eslint is dummy
+    ta.selectionStart = range[1] + 0;
+    ta.selectionEnd = range[1] + 0;
+  } else if (range[0] !== range[1]) {
+    ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]);
+    // eslint is dummy
+    [ta.selectionStart] = range;
+    [ta.selectionEnd] = range;
+  }
+}
+
 function runBtnBehaviour(key) {
-  let ta = document.querySelector('#kb-textarea');
+  const ta = document.querySelector('#kb-textarea');
   if (isSign(key)) {
     insertSign(key, ta);
   } else {
-    switch(key){
+    switch (key) {
       case 'Space':
         insertSign(' ', ta);
         break;
@@ -731,14 +655,14 @@ function runBtnBehaviour(key) {
         deleteSign(key, ta);
         break;
       case 'Delete':
-          deleteSign(key, ta);
-          break;
+        deleteSign(key, ta);
+        break;
       case 'ShiftLeft':
       case 'ShiftRight':
         if (pressedKeys.has('AltLeft') || pressedKeys.has('AltRight')) {
           keyboardModes.changeLang();
           retapeButtonsNames();
-          saveDot.setItem('lang', keyboardModes.lang)
+          saveDot.setItem('lang', keyboardModes.lang);
         }
         break;
       case 'AltLeft':
@@ -746,7 +670,7 @@ function runBtnBehaviour(key) {
         if (pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight')) {
           keyboardModes.changeLang();
           retapeButtonsNames();
-          saveDot.setItem('lang', keyboardModes.lang)
+          saveDot.setItem('lang', keyboardModes.lang);
         }
         break;
       default:
@@ -755,56 +679,129 @@ function runBtnBehaviour(key) {
   }
 }
 
-function isSign(key) {
-  if (keyBase[key].engUpp !== undefined) {
-    return true;
+function addReferences(wrapper) {
+  const ref = [
+    'Клавиатура создана в системе <span class="view-selection">Windows</span>',
+    '<p class="references">Переключение раскладки производится комбинацией клавиш <span class="view-selection">Alt + Shift</span>',
+    '<p class="references">Нажаты клавиши: <span class="view-selection" id="pressed-keys">&nbsp;</span></p>',
+  ];
+  ref.forEach((i) => {
+    const p = document.createElement('p');
+    p.classList.add('references');
+    p.innerHTML = i;
+    wrapper.append(p);
+  });
+}
+
+function createKeyboard() {
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('keyboard-wrapper');
+  document.body.append(wrapper);
+  const textarea = document.createElement('textarea');
+  textarea.classList.add('default-textarea');
+  setAttributes(textarea, {
+    name: 'kb-textarea',
+    id: 'kb-textarea',
+    cols: '30',
+    rows: '10',
+  });
+  wrapper.append(textarea);
+  const keypad = document.createElement('div');
+  keypad.classList.add('keypad');
+  keypad.id = 'keypad';
+  wrapper.append(keypad);
+  const keypadRows = addKeypadRows(keypad);
+  addKeypadItems(keypadRows);
+  addReferences(wrapper);
+}
+
+function refreshPressedButton(pressedK) {
+  const r = [];
+  pressedK.forEach((el) => {
+    r.push(el);
+  });
+  const pressed = document.querySelector('#pressed-keys');
+  pressed.innerHTML = r.join(' + ');
+}
+
+function pressButton(key) {
+  const btn = document.querySelector(`#${key}`);
+  if (key !== 'CapsLock') {
+    pressedKeys.add(key);
+    btn.classList.add('item-active');
   } else {
-    return false;
+    if (keyboardModes.isCapsLock) {
+      pressedKeys.delete(key);
+    } else {
+      pressedKeys.add(key);
+    }
+    keyboardModes.isCapsLock = !keyboardModes.isCapsLock;
+    btn.classList.toggle('item-active');
+  }
+  if (key === 'ShiftRight' || key === 'ShiftLeft') {
+    keyboardModes.isShift = true;
+  }
+  // pressed buttons
+  refreshPressedButton(pressedKeys);
+  retapeButtonsNames();
+  runBtnBehaviour(key);
+}
+
+function pressBtnIntercept(event) {
+  // keypad intercept event from buttons and run behaviour
+  event.preventDefault();
+  const clicked = event.target;
+  if (clicked.classList.contains('keypad-row__item')) {
+    pressButton(clicked.id);
+  }
+}
+function pressKeyIntercept(event) {
+  event.preventDefault();
+  if (keyBase[event.code] !== undefined) {
+    pressButton(event.code);
+  } else {
+    pressedKeys.add(event.code);
+    refreshPressedButton(pressedKeys);
   }
 }
 
-function insertSign(key, ta) {
-  let range = getRange();
-  let btnText = ((keyBase[key] !== undefined) ? getButtonText(key): key);
-  if (range === null) {
-    ta.value += btnText;
+function releaseButton(key) {
+  const btn = document.querySelector(`#${key}`);
+  if (key !== 'CapsLock') {
+    pressedKeys.delete(key);
+    btn.classList.remove('item-active');
+  }
+  if (key === 'ShiftRight' || key === 'ShiftLeft') {
+    keyboardModes.isShift = false;
+  }
+  // pressed buttons
+  refreshPressedButton(pressedKeys);
+  retapeButtonsNames();
+}
+
+function releaseBtnIntercept(event) {
+  // keypad intercept event from buttons and run behaviour
+  const clicked = event.target;
+  if (clicked.classList.contains('keypad-row__item')) {
+    releaseButton(clicked.id);
+  }
+}
+function releaseKeyIntercept(event) {
+  // keypad intercept event from buttons and run behaviour
+  if (keyBase[event.code] !== undefined) {
+    releaseButton(event.code);
   } else {
-    ta.value = ta.value.slice(0, range[0]) + btnText + ta.value.slice(range[1]);
-    ta.selectionStart = range[0]+1;
-    ta.selectionEnd = range[0]+1;
+    pressedKeys.delete(event.code);
+    refreshPressedButton(pressedKeys);
   }
 }
 
-function deleteSign(key, ta) {
-  let range = getRange();
-  if (range === null) {
-    if (key === 'Backspace') {
-      ta.value = ta.value.slice(0, ta.value.length-1);
-    } else if (key === 'Delete') {
-      // pass
-    }
-  } else {
-    if (key === 'Backspace') {
-      if (range[0] === range[1] && !(range[0] === 0 && range[1] === 0)) {
-        ta.value = ta.value.slice(0, range[0]-1) + ta.value.slice(range[1]);
-        ta.selectionStart = range[0]-1;
-        ta.selectionEnd = range[0]-1;
-      } else if (range[0] !== range[1]) {
-        ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]);
-        ta.selectionStart = range[0];
-        ta.selectionEnd = range[0];
-      }
-    } else if (key === 'Delete') {
-      if (range[0] === range[1] && !(range[0] === ta.value.length || range[1] === ta.value.length)) {
-        ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]+1);
-        ta.selectionStart = range[1];
-        ta.selectionEnd = range[1];
-      } else if (range[0] !== range[1]) {
-        ta.value = ta.value.slice(0, range[0]) + ta.value.slice(range[1]);
-        ta.selectionStart = range[0];
-        ta.selectionEnd = range[0];
-      }
-    }
-    
-  }
-}
+createKeyboard();
+
+const keypad = document.querySelector('#keypad');
+keypad.addEventListener('mousedown', pressBtnIntercept);
+keypad.addEventListener('mouseup', releaseBtnIntercept);
+keypad.addEventListener('selectstart', (e) => { e.preventDefault(); });
+document.addEventListener('keydown', pressKeyIntercept);
+document.addEventListener('keyup', releaseKeyIntercept);
+document.querySelector('#kb-textarea').addEventListener('focus', getRange);
