@@ -659,7 +659,7 @@ function runBtnBehaviour(key) {
         break;
       case 'ShiftLeft':
       case 'ShiftRight':
-        if (pressedKeys.has('AltLeft') || pressedKeys.has('AltRight')) {
+        if ((pressedKeys.has('AltLeft') || pressedKeys.has('AltRight')) && pressedKeys.size === 2) {
           keyboardModes.changeLang();
           retapeButtonsNames();
           saveDot.setItem('lang', keyboardModes.lang);
@@ -667,7 +667,7 @@ function runBtnBehaviour(key) {
         break;
       case 'AltLeft':
       case 'AltRight':
-        if (pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight')) {
+        if ((pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight')) && pressedKeys.size === 2) {
           keyboardModes.changeLang();
           retapeButtonsNames();
           saveDot.setItem('lang', keyboardModes.lang);
