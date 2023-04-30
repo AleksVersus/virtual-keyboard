@@ -448,16 +448,25 @@ const keyBase = {
   },
 }
 class kbModes {
-  constructor() {
+  constructor(lang='eng') {
     this.isCapsLock = false;
-    this.lang = 'eng';
+    this.lang = lang;
     this.isShift = false;
   }
   changeLang() {
     this.lang = (this.lang === 'eng' ? 'rus' : 'eng');
   }
 }
-let keyboardModes = new kbModes();
+const saveDot = localStorage;
+let keyboardModes;
+if (saveDot.getItem('lang')) {
+  let lang = saveDot.getItem('lang');
+  keyboardModes = new kbModes(lang);
+} else {
+  keyboardModes = new kbModes();
+  saveDot.setItem('lang', keyboardModes.lang);
+}
+
 let pressedKeys = new Set(); // keys id (code)-s
 // let taRange = new Range();
 
@@ -729,6 +738,7 @@ function runBtnBehaviour(key) {
         if (pressedKeys.has('AltLeft') || pressedKeys.has('AltRight')) {
           keyboardModes.changeLang();
           retapeButtonsNames();
+          saveDot.setItem('lang', keyboardModes.lang)
         }
         break;
       case 'AltLeft':
@@ -736,6 +746,7 @@ function runBtnBehaviour(key) {
         if (pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight')) {
           keyboardModes.changeLang();
           retapeButtonsNames();
+          saveDot.setItem('lang', keyboardModes.lang)
         }
         break;
       default:
