@@ -105,7 +105,7 @@ const keyBase = {
     rusLow: 'й',
     rusUpp: 'Й',
     engCaps: true,
-    rusCaps: false,
+    rusCaps: true,
   },
   KeyW: {
     engLow: 'w',
@@ -183,7 +183,7 @@ const keyBase = {
     engLow: '[',
     engUpp: '{',
     rusLow: 'х',
-    rusUpp: 'х',
+    rusUpp: 'Х',
     engCaps: false,
     rusCaps: true,
   },
@@ -492,13 +492,17 @@ function addKeypadRows(keypad) {
 function getButtonText(key) {
   if (keyboardModes.lang === 'eng' || keyBase[key].rusLow === undefined) {
     // eng on if rus symbols is out, or eng lang switch on
-    if (((keyboardModes.isCapsLock && keyBase[key].engCaps) || (keyboardModes.isShift))
+    if (((keyboardModes.isCapsLock && keyBase[key].engCaps && !keyboardModes.isShift)
+      || (keyboardModes.isShift && !keyBase[key].engCaps && keyboardModes.isCapsLock)
+      || (keyboardModes.isShift && !keyboardModes.isCapsLock))
       && keyBase[key].engUpp !== undefined) {
       return keyBase[key].engUpp;
     }
     return keyBase[key].engLow;
   }
-  if (((keyboardModes.isCapsLock && keyBase[key].rusCaps) || (keyboardModes.isShift))
+  if (((keyboardModes.isCapsLock && keyBase[key].rusCaps && !keyboardModes.isShift)
+    || (keyboardModes.isShift && !keyBase[key].rusCaps && keyboardModes.isCapsLock)
+    || (keyboardModes.isShift && !keyboardModes.isCapsLock))
     && keyBase[key].rusUpp !== undefined) {
     return keyBase[key].rusUpp;
   }
@@ -586,7 +590,8 @@ function isSign(key) {
 function insertSign(key) {
   const ta = document.querySelector('#kb-textarea');
   const range = getRange();
-  const btnText = ((keyBase[key] !== undefined) ? getButtonText(key) : key);
+  let btnText = ((keyBase[key] !== undefined) ? getButtonText(key) : key);
+  btnText = btnText.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&');
   if (range === null) {
     ta.value += btnText;
   } else {
@@ -659,7 +664,9 @@ function runBtnBehaviour(key) {
         break;
       case 'ShiftLeft':
       case 'ShiftRight':
-        if ((pressedKeys.has('AltLeft') || pressedKeys.has('AltRight')) && pressedKeys.size === 2) {
+        if ((pressedKeys.has('AltLeft') || pressedKeys.has('AltRight'))
+          && ((pressedKeys.size === 2 && !keyboardModes.isCapsLock)
+          || (pressedKeys.size === 3 && keyboardModes.isCapsLock))) {
           keyboardModes.changeLang();
           retapeButtonsNames();
           saveDot.setItem('lang', keyboardModes.lang);
@@ -667,7 +674,9 @@ function runBtnBehaviour(key) {
         break;
       case 'AltLeft':
       case 'AltRight':
-        if ((pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight')) && pressedKeys.size === 2) {
+        if ((pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight'))
+        && ((pressedKeys.size === 2 && !keyboardModes.isCapsLock)
+        || (pressedKeys.size === 3 && keyboardModes.isCapsLock))) {
           keyboardModes.changeLang();
           retapeButtonsNames();
           saveDot.setItem('lang', keyboardModes.lang);
