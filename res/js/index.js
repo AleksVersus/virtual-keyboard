@@ -492,13 +492,17 @@ function addKeypadRows(keypad) {
 function getButtonText(key) {
   if (keyboardModes.lang === 'eng' || keyBase[key].rusLow === undefined) {
     // eng on if rus symbols is out, or eng lang switch on
-    if (((keyboardModes.isCapsLock && keyBase[key].engCaps) || (keyboardModes.isShift))
+    if (((keyboardModes.isCapsLock && keyBase[key].engCaps && !keyboardModes.isShift)
+      || (keyboardModes.isShift && !keyBase[key].engCaps && keyboardModes.isCapsLock)
+      || (keyboardModes.isShift && !keyboardModes.isCapsLock))
       && keyBase[key].engUpp !== undefined) {
       return keyBase[key].engUpp;
     }
     return keyBase[key].engLow;
   }
-  if (((keyboardModes.isCapsLock && keyBase[key].rusCaps) || (keyboardModes.isShift))
+  if (((keyboardModes.isCapsLock && keyBase[key].rusCaps && !keyboardModes.isShift)
+    || (keyboardModes.isShift && !keyBase[key].rusCaps && keyboardModes.isCapsLock)
+    || (keyboardModes.isShift && !keyboardModes.isCapsLock))
     && keyBase[key].rusUpp !== undefined) {
     return keyBase[key].rusUpp;
   }
