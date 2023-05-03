@@ -105,7 +105,7 @@ const keyBase = {
     rusLow: 'й',
     rusUpp: 'Й',
     engCaps: true,
-    rusCaps: false,
+    rusCaps: true,
   },
   KeyW: {
     engLow: 'w',
@@ -183,7 +183,7 @@ const keyBase = {
     engLow: '[',
     engUpp: '{',
     rusLow: 'х',
-    rusUpp: 'х',
+    rusUpp: 'Х',
     engCaps: false,
     rusCaps: true,
   },
